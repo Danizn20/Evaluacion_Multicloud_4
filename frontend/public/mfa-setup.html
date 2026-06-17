@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configurar MFA - Cruz Azul ERP</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="panel">
+    <h1>Configurar MFA</h1>
+
+    <p>Escanea este código QR con Google Authenticator o Microsoft Authenticator.</p>
+
+    <div id="qr-container">
+      <p>Cargando QR...</p>
+    </div>
+
+    <p>Luego vuelve al login e ingresa el código de 6 dígitos generado por tu teléfono.</p>
+
+    <button onclick="volver()">Volver al login</button>
+  </div>
+
+  <script>
+    async function cargarQR() {
+      const respuesta = await fetch('/api/mfa/qr');
+      const data = await respuesta.json();
+
+      if (data.ok) {
+        document.getElementById('qr-container').innerHTML = `
+          <img src="${data.qr}" alt="QR MFA" style="max-width: 260px;">
+        `;
+      } else {
+        document.getElementById('qr-container').innerText = 'Error cargando QR MFA';
+      }
+    }
+
+    function volver() {
+      window.location.href = '/';
+    }
+
+    cargarQR();
+  </script>
+</body>
+</html>

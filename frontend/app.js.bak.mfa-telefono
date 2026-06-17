@@ -1,7 +1,5 @@
 require('dotenv').config();
 
-const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
 const express = require('express');
 const path = require('path');
 const jwt = require('jsonwebtoken');
@@ -66,21 +64,7 @@ app.post('/api/login', (req, res) => {
 app.post('/api/mfa', (req, res) => {
   const { usuario, codigo } = req.body;
 
-  if (usuario !== process.env.ADMIN_USER) {
-    return res.status(401).json({
-      ok: false,
-      mensaje: 'Usuario no válido para MFA'
-    });
-  }
-
-  const mfaValido = speakeasy.totp.verify({
-    secret: process.env.MFA_SECRET,
-    encoding: 'base32',
-    token: codigo,
-    window: 1
-  });
-
-  if (mfaValido) {
+  if (usuario === process.env.ADMIN_USER && codigo === process.env.MFA_CODE) {
     const token = jwt.sign(
       {
         usuario,
@@ -94,16 +78,17 @@ app.post('/api/mfa', (req, res) => {
 
     return res.json({
       ok: true,
-      mensaje: 'MFA correcto. Token JWT generado.',
+      mensaje: 'MFA correcto. Token generado.',
       token
     });
   }
 
   return res.status(401).json({
     ok: false,
-    mensaje: 'Código MFA incorrecto o expirado'
+    mensaje: 'Código MFA incorrecto'
   });
 });
+
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
@@ -225,34 +210,6 @@ app.delete('/api/productos/:id', validarToken, async (req, res) => {
     res.status(500).json({
       ok: false,
       mensaje: 'Error eliminando producto',
-      detalle: error.message
-    });
-  }
-});
-
-app.get('/mfa-setup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'mfa-setup.html'));
-});
-
-app.get('/api/mfa/qr', async (req, res) => {
-  try {
-    const otpauthUrl = speakeasy.otpauthURL({
-      secret: process.env.MFA_SECRET,
-      label: 'admin@cruzazul-erp',
-      issuer: 'Cruz Azul ERP',
-      encoding: 'base32'
-    });
-
-    const qr = await QRCode.toDataURL(otpauthUrl);
-
-    res.json({
-      ok: true,
-      qr
-    });
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error generando QR MFA',
       detalle: error.message
     });
   }
