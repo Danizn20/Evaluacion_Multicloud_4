@@ -12,6 +12,7 @@
     <div id="info"></div>
 
     <button onclick="cargarRecurso()">Ver recurso protegido</button>
+    <button onclick="irProductos()">Gestión de productos</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>
 
     <h2>Datos protegidos desde RDS</h2>
@@ -54,6 +55,10 @@
 
       const data = await respuesta.json();
       document.getElementById('datos').innerText = JSON.stringify(data, null, 2);
+    }
+
+    function irProductos() {
+      window.location.href = '/productos';
     }
 
     function cerrarSesion() {

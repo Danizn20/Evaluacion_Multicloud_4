@@ -51,7 +51,7 @@ app.post('/api/login', (req, res) => {
     return res.json({
       ok: true,
       mensaje: 'Credenciales correctas. Continúe con MFA.',
-      usuario
+      usuario: usuario
     });
   }
 
@@ -67,7 +67,7 @@ app.post('/api/mfa', (req, res) => {
   if (usuario === process.env.ADMIN_USER && codigo === process.env.MFA_CODE) {
     const token = jwt.sign(
       {
-        usuario,
+        usuario: usuario,
         rol: 'administrador'
       },
       process.env.JWT_SECRET,
@@ -79,7 +79,7 @@ app.post('/api/mfa', (req, res) => {
     return res.json({
       ok: true,
       mensaje: 'MFA correcto. Token generado.',
-      token
+      token: token
     });
   }
 
@@ -91,10 +91,6 @@ app.post('/api/mfa', (req, res) => {
 
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
-app.get('/productos', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'productos.html'));
 });
 
 app.get('/api/dashboard-data', validarToken, async (req, res) => {
@@ -132,84 +128,6 @@ app.get('/api/recurso-protegido', validarToken, async (req, res) => {
     res.status(500).json({
       ok: false,
       mensaje: 'Error consultando tabla prueba_conexion',
-      detalle: error.message
-    });
-  }
-});
-
-app.get('/api/productos', validarToken, async (req, res) => {
-  try {
-    const resultado = await pool.query(
-      'SELECT id, codigo, nombre, categoria, stock, precio, proveedor, fecha_registro FROM productos ORDER BY id DESC'
-    );
-
-    res.json({
-      ok: true,
-      mensaje: 'Listado de productos obtenido correctamente',
-      productos: resultado.rows
-    });
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error consultando productos',
-      detalle: error.message
-    });
-  }
-});
-
-app.post('/api/productos', validarToken, async (req, res) => {
-  try {
-    const { codigo, nombre, categoria, stock, precio, proveedor } = req.body;
-
-    if (!codigo || !nombre || !categoria) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: 'Código, nombre y categoría son obligatorios'
-      });
-    }
-
-    const resultado = await pool.query(
-      `INSERT INTO productos (codigo, nombre, categoria, stock, precio, proveedor)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [
-        codigo,
-        nombre,
-        categoria,
-        Number(stock) || 0,
-        Number(precio) || 0,
-        proveedor || ''
-      ]
-    );
-
-    res.json({
-      ok: true,
-      mensaje: 'Producto registrado correctamente',
-      producto: resultado.rows[0]
-    });
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error registrando producto',
-      detalle: error.message
-    });
-  }
-});
-
-app.delete('/api/productos/:id', validarToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query('DELETE FROM productos WHERE id = $1', [id]);
-
-    res.json({
-      ok: true,
-      mensaje: 'Producto eliminado correctamente'
-    });
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      mensaje: 'Error eliminando producto',
       detalle: error.message
     });
   }

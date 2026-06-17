@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cruz Azul ERP - Productos</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="panel">
+    <h1>Gestión de Productos - Cruz Azul ERP</h1>
+    <p>Módulo heredado de EVA2 y protegido con autenticación MFA + Token JWT en EVA3.</p>
+
+    <h2>Registrar nuevo producto</h2>
+
+    <div class="form-grid">
+      <div>
+        <label>Código</label>
+        <input type="text" id="codigo" placeholder="MED-002">
+      </div>
+
+      <div>
+        <label>Nombre</label>
+        <input type="text" id="nombre" placeholder="Ibuprofeno 400mg">
+      </div>
+
+      <div>
+        <label>Categoría</label>
+        <input type="text" id="categoria" placeholder="Medicamentos">
+      </div>
+
+      <div>
+        <label>Stock</label>
+        <input type="number" id="stock" placeholder="100">
+      </div>
+
+      <div>
+        <label>Precio</label>
+        <input type="number" id="precio" placeholder="2990">
+      </div>
+
+      <div>
+        <label>Proveedor</label>
+        <input type="text" id="proveedor" placeholder="Proveedor Cruz Azul">
+      </div>
+    </div>
+
+    <button onclick="registrarProducto()">Guardar producto</button>
+    <button onclick="cargarProductos()">Actualizar listado</button>
+    <button onclick="volverDashboard()">Volver al dashboard</button>
+
+    <p id="mensaje"></p>
+
+    <h2>Listado de productos registrados</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Stock</th>
+          <th>Precio</th>
+          <th>Proveedor</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-productos"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function obtenerToken() {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        window.location.href = '/';
+      }
+
+      return token;
+    }
+
+    async function cargarProductos() {
+      const token = obtenerToken();
+
+      const respuesta = await fetch('/api/productos', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const data = await respuesta.json();
+
+      if (!data.ok) {
+        document.getElementById('mensaje').innerText = data.mensaje || 'Error cargando productos';
+        return;
+      }
+
+      const tabla = document.getElementById('tabla-productos');
+      tabla.innerHTML = '';
+
+      data.productos.forEach((producto) => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${producto.id}</td>
+            <td>${producto.codigo}</td>
+            <td>${producto.nombre}</td>
+            <td>${producto.categoria}</td>
+            <td>${producto.stock}</td>
+            <td>$${producto.precio}</td>
+            <td>${producto.proveedor || '-'}</td>
+            <td>
+              <button class="btn-small" onclick="eliminarProducto(${producto.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    async function registrarProducto() {
+      const token = obtenerToken();
+
+      const producto = {
+        codigo: document.getElementById('codigo').value,
+        nombre: document.getElementById('nombre').value,
+        categoria: document.getElementById('categoria').value,
+        stock: document.getElementById('stock').value,
+        precio: document.getElementById('precio').value,
+        proveedor: document.getElementById('proveedor').value
+      };
+
+      const respuesta = await fetch('/api/productos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(producto)
+      });
+
+      const data = await respuesta.json();
+      document.getElementById('mensaje').innerText = data.mensaje;
+
+      if (data.ok) {
+        document.getElementById('codigo').value = '';
+        document.getElementById('nombre').value = '';
+        document.getElementById('categoria').value = '';
+        document.getElementById('stock').value = '';
+        document.getElementById('precio').value = '';
+        document.getElementById('proveedor').value = '';
+        cargarProductos();
+      }
+    }
+
+    async function eliminarProducto(id) {
+      const token = obtenerToken();
+
+      const respuesta = await fetch('/api/productos/' + id, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      const data = await respuesta.json();
+      document.getElementById('mensaje').innerText = data.mensaje;
+      cargarProductos();
+    }
+
+    function volverDashboard() {
+      window.location.href = '/dashboard';
+    }
+
+    cargarProductos();
+  </script>
+</body>
+</html>
