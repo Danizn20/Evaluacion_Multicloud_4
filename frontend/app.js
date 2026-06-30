@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 const express = require('express');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
+const { Pool } = require('pg'); const os = require('os');
 
 const app = express();
 
@@ -19,9 +19,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: false
 });
 
 function validarToken(req, res, next) {
@@ -120,13 +118,13 @@ app.get('/api/dashboard-data', validarToken, async (req, res) => {
       ok: true,
       usuario: req.usuario.usuario,
       rol: req.usuario.rol,
-      mensaje: 'Conexión correcta con RDS PostgreSQL',
+      mensaje: 'Conexión correcta con PostgreSQL Docker privado',
       fecha_servidor: resultado.rows[0].fecha_servidor
     });
   } catch (error) {
     res.status(500).json({
       ok: false,
-      mensaje: 'Error conectando con RDS',
+      mensaje: 'Error conectando con PostgreSQL Docker privado',
       detalle: error.message
     });
   }
@@ -265,13 +263,13 @@ app.get('/health', async (req, res) => {
     res.json({
       estado: 'OK',
       frontend: 'activo',
-      rds: 'conectado'
+      postgresql: 'conectado', instancia: os.hostname()
     });
   } catch (error) {
     res.status(500).json({
       estado: 'ERROR',
       frontend: 'activo',
-      rds: 'sin conexion',
+      postgresql: 'sin conexion', instancia: os.hostname(),
       detalle: error.message
     });
   }
