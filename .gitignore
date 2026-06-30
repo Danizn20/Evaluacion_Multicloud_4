@@ -9,3 +9,4 @@ backups/
 aws/
 awscliv2.zip
 .DS_Store
+database/.env
